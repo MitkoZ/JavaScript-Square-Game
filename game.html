@@ -31,12 +31,14 @@
 	var mySquare=99;
 	var finishLine=666;
 	var isObstacleHit=false;
+	var movesToMakeArrayOfArrays=[];
+	var currentPositionition=[];
 	function PrintInstructions(directions) {
 		var instructionsContainer = document.getElementById("instructions-container");
 		instructionsContainer.innerHTML = "";
 
 		for (var i = 0; i < directions.length; i++) {
-			instructionsContainer.innerHTML+=directions[i]+" ";
+			instructionsContainer.innerHTML+="<span>"+directions[i]+"</span>"+" ";
 		}
 	}
 
@@ -53,7 +55,7 @@
 		}
 	}
 
-	function GetCurrentPosition(levelArray){
+	function GetCurrentPositionition(levelArray){
 		for (var i = 0; i < levelArray.length; i++) {
 			for (var j = 0; j < levelArray[i].length; j++) {
 				if (levelArray[i][j] == mySquare) {
@@ -64,12 +66,16 @@
 		}
 	}
 
+	function SetCurrentPositionVariable(Row,Column){
+		currentPosition[0]=Row;
+		currentPosition[1]=Column;
+	}
+
 	function MoveSquare(direction, levelArray){
-		var currentPos = GetCurrentPosition(firstLevelArray);
-		var currentRow = currentPos[0];
-		var currentCol = currentPos[1];
+		currentPosition = GetCurrentPositionition(levelArray);
+		var currentRow = currentPosition[0];
+		var currentCol = currentPosition[1];
 		var isReachedFinishLine=false;
-		debugger;
 		switch(direction){
 			case 'right':
 			if (levelArray.length >= currentCol+1 && levelArray[currentRow][currentCol+1]!=obstacle) {
@@ -78,6 +84,7 @@
 				}
 				levelArray[currentRow][currentCol] = 0;
 				levelArray[currentRow][currentCol+1] = mySquare;
+				SetCurrentPositionVariable(currentRow, currentCol+1);
 				return isReachedFinishLine;
 			}
 			else {
@@ -92,6 +99,7 @@
 				}
 				levelArray[currentRow][currentCol]=0;
 				levelArray[currentRow][currentCol-1] = mySquare;
+				SetCurrentPositionVariable(currentRow, currentCol-1);
 				return isReachedFinishLine;
 			}
 			else {
@@ -106,6 +114,7 @@
 				}
 				levelArray[currentRow][currentCol]=0;
 				levelArray[currentRow-1][currentCol] = mySquare;
+				SetCurrentPositionVariable(currentRow-1, currentCol);
 				return isReachedFinishLine;
 			}
 			else {
@@ -120,6 +129,7 @@
 				}
 				levelArray[currentRow][currentCol] = 0;
 				levelArray[currentRow+1][currentCol] = mySquare;
+				SetCurrentPositionVariable(currentRow+1, currentCol);
 				return isReachedFinishLine;
 			}
 			else {
@@ -129,17 +139,42 @@
 		}
 	}
 
+	function copyArrayByValue(oldArray){
+		var newArray=[];
+		for (var i = 0; i < oldArray.length; i++)
+	    {
+	    	newArray.push(oldArray[i].slice());
+	    }
+	    return newArray;
+	}
+
+	function GlowCurrentDirection(directionIndex){
+		debugger;
+		var instructionsContainer = document.getElementById("instructions-container");
+		var spansInsideContainer=instructionsContainer.querySelectorAll("span");
+		for (var i = 0; i < spansInsideContainer.length; i++) {
+			spansInsideContainer[i].style.color="black";
+		}
+		spansInsideContainer[directionIndex].style.color="yellow";
+	}
+
+	function GlowCurrentDirectionTimeout(directionIndex, milliseconds){
+		setTimeout(GlowCurrentDirection, milliseconds, directionIndex);
+	}
 
 	function StartProgram() {
 		for (var i = 0; i < directions.length; i++) {
 			ClearGameplay();
 			var isReachedFinishLine=MoveSquare(directions[i], firstLevelArray);
-			debugger;
+			if (!isObstacleHit) {
+				GlowCurrentDirectionTimeout(i, i*2000);
+			}
 			var isWin=false;
 				if (isReachedFinishLine && (i+1) == directions.length) {
 					isWin=true;
 				}
-		RenderGameplay(firstLevelArray);
+		movesToMakeArrayOfArrays.push(copyArrayByValue(firstLevelArray));
+		RenderGameplayTimeout(movesToMakeArrayOfArrays[i], i*2000);
 		if (isObstacleHit) {
 			alert("You lose :(");
 			return;
@@ -177,9 +212,10 @@
 			//mySquare - my square that I should move
 			//finishLine - you win
 	function RenderGameplay(levelArray) {
+		var gameContainer = document.getElementById("game-container");
+			ClearGameplay();
 		for (var i = 0; i < levelArray.length; i++) {
 			for (var j = 0; j < levelArray[i].length; j++) {
-			var gameContainer = document.getElementById("game-container");
 			var innerDiv = document.createElement("div");
 				innerDiv.style.width = "50px";
 				innerDiv.style.height = "50px";
@@ -205,6 +241,11 @@
 			}
 		}
 	}
+
+	function RenderGameplayTimeout(levelArray, milliseconds){
+		setTimeout(RenderGameplay, milliseconds, levelArray);
+	}
+
 	var firstLevelArray=[
 			[emptySlot, emptySlot, obstacle, emptySlot, emptySlot, emptySlot],
 			[obstacle, emptySlot, obstacle, emptySlot, emptySlot, obstacle],
@@ -212,6 +253,7 @@
 			[obstacle, emptySlot, obstacle, emptySlot, emptySlot, emptySlot],
 			[obstacle, emptySlot, obstacle, obstacle, emptySlot, finishLine]
 	];
+	
 	RenderGameplay(firstLevelArray);
 </script>
 </body>
