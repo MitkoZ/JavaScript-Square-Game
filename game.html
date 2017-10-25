@@ -24,15 +24,18 @@
 <body>
 
 <script type="text/javascript">
-
+	var directionsCurrentIndex=0;
 	var directions=[];
 	var obstacle=1;
+	var border=2;
+	var proceed=0;
 	var emptySlot=0;
 	var mySquare=99;
 	var finishLine=666;
-	var isObstacleHit=false;
-	var movesToMakeArrayOfArrays=[];
-	var currentPositionition=[];
+	var currentPlayerPosition={};
+	var oldPosition={};
+	var isWin=false;
+	var isObstacleHitOrLeftBorders=false;
 	function PrintInstructions(directions) {
 		var instructionsContainer = document.getElementById("instructions-container");
 		instructionsContainer.innerHTML = "";
@@ -55,101 +58,64 @@
 		}
 	}
 
-	function GetCurrentPositionition(levelArray){
-		for (var i = 0; i < levelArray.length; i++) {
-			for (var j = 0; j < levelArray[i].length; j++) {
-				if (levelArray[i][j] == mySquare) {
-					var position = [i, j];
-					return position;
+	function GetCurrentPositionition(map){
+		for (var i = 0; i < map.length; i++) {
+			for (var j = 0; j < map[i].length; j++) {
+				if (map[i][j] == mySquare) {
+					return {x: j, y: i};
 				}
 			}
 		}
 	}
 
-	function SetCurrentPositionVariable(Row,Column){
-		currentPosition[0]=Row;
-		currentPosition[1]=Column;
-	}
+	function MoveSquare(direction, map){
+		currentPlayerPosition = GetCurrentPositionition(map);
+		oldPosition.x=currentPlayerPosition.x;
+		oldPosition.y=currentPlayerPosition.y;
 
-	function MoveSquare(direction, levelArray){
-		currentPosition = GetCurrentPositionition(levelArray);
-		var currentRow = currentPosition[0];
-		var currentCol = currentPosition[1];
-		var isReachedFinishLine=false;
 		switch(direction){
 			case 'right':
-			if (levelArray.length >= currentCol+1 && levelArray[currentRow][currentCol+1]!=obstacle) {
-				if (levelArray[currentRow][currentCol+1]==finishLine) {
-					isReachedFinishLine=true;
-				}
-				levelArray[currentRow][currentCol] = 0;
-				levelArray[currentRow][currentCol+1] = mySquare;
-				SetCurrentPositionVariable(currentRow, currentCol+1);
-				return isReachedFinishLine;
-			}
-			else {
-				isObstacleHit=true;
-			} 
+				currentPlayerPosition.x++;	
 			break;
 
 			case 'left':
-			if ((currentCol-1) >= 0 && levelArray[currentRow][currentCol-1]!=obstacle) {
-				if (levelArray[currentRow][currentCol-1]==finishLine) {
-					isReachedFinishLine=true;
-				}
-				levelArray[currentRow][currentCol]=0;
-				levelArray[currentRow][currentCol-1] = mySquare;
-				SetCurrentPositionVariable(currentRow, currentCol-1);
-				return isReachedFinishLine;
-			}
-			else {
-				isObstacleHit=true;
-			}
+			   currentPlayerPosition.x--;
 			break;
 
 			case 'up':
-			if (currentRow-1>=0 && levelArray[currentRow-1][currentCol]!=obstacle) {
-				if (levelArray[currentRow-1][currentCol]) {
-					isReachedFinishLine=true;
-				}
-				levelArray[currentRow][currentCol]=0;
-				levelArray[currentRow-1][currentCol] = mySquare;
-				SetCurrentPositionVariable(currentRow-1, currentCol);
-				return isReachedFinishLine;
-			}
-			else {
-				isObstacleHit=true;
-			}
+			   currentPlayerPosition.y--;
 			break;
 
 			case 'down':
-			if (levelArray.length>currentRow+1 && levelArray[currentRow+1][currentCol]!=obstacle) {
-				if (levelArray[currentRow+1][currentCol]) {
-					isReachedFinishLine=true;
-				}
-				levelArray[currentRow][currentCol] = 0;
-				levelArray[currentRow+1][currentCol] = mySquare;
-				SetCurrentPositionVariable(currentRow+1, currentCol);
-				return isReachedFinishLine;
-			}
-			else {
-				isObstacleHit=true;
-			}
+				currentPlayerPosition.y++;
 			break;
 		}
+
+		return checkPosition(currentPlayerPosition, map);
+
 	}
 
-	function copyArrayByValue(oldArray){
-		var newArray=[];
-		for (var i = 0; i < oldArray.length; i++)
-	    {
-	    	newArray.push(oldArray[i].slice());
-	    }
-	    return newArray;
+	function checkPosition(playerPosition, map) {
+		if (playerPosition.x < 0 || playerPosition.y < 0){
+			return border;
+		}//outside of borders (left and top)
+		
+		if (playerPosition.y > map.length-1 || playerPosition.x > map[playerPosition.y].length-1){
+			return border;
+		}//outside of borders (right and bottom)
+
+		if (map[playerPosition.y][playerPosition.x]==obstacle) {
+			return obstacle;
+		}//obstacle hit
+
+		if (map[playerPosition.y][playerPosition.x]==finishLine) {
+			return finishLine;
+		}//finish line reached
+
+		return proceed;
 	}
 
 	function GlowCurrentDirection(directionIndex){
-		debugger;
 		var instructionsContainer = document.getElementById("instructions-container");
 		var spansInsideContainer=instructionsContainer.querySelectorAll("span");
 		for (var i = 0; i < spansInsideContainer.length; i++) {
@@ -157,36 +123,6 @@
 		}
 		spansInsideContainer[directionIndex].style.color="yellow";
 	}
-
-	function GlowCurrentDirectionTimeout(directionIndex, milliseconds){
-		setTimeout(GlowCurrentDirection, milliseconds, directionIndex);
-	}
-
-	function StartProgram() {
-		for (var i = 0; i < directions.length; i++) {
-			ClearGameplay();
-			var isReachedFinishLine=MoveSquare(directions[i], firstLevelArray);
-			if (!isObstacleHit) {
-				GlowCurrentDirectionTimeout(i, i*2000);
-			}
-			var isWin=false;
-				if (isReachedFinishLine && (i+1) == directions.length) {
-					isWin=true;
-				}
-		movesToMakeArrayOfArrays.push(copyArrayByValue(firstLevelArray));
-		RenderGameplayTimeout(movesToMakeArrayOfArrays[i], i*2000);
-		if (isObstacleHit) {
-			alert("You lose :(");
-			return;
-		}
-	}
-		if (isWin) {
-			alert("You win!");
-		}
-		else{
-			alert("You lose :(");
-		}
-}
 </script>
 
 
@@ -197,7 +133,7 @@
     <a href="#" class="w3-bar-item w3-button w3-padding-large w3-hide-small" onclick="PressButton('right')">></a>
     <a href="#" class="w3-bar-item w3-button w3-padding-large w3-hide-small" onclick="PressButton('down')">V</a>
     <a href="#" class="w3-bar-item w3-button w3-padding-large w3-hide-small" onclick="PressButton('left')">&lt;</a>
-    <a href="#" class="w3-bar-item w3-button w3-padding-large w3-hide-small" onclick="StartProgram()">Start</a>
+    <a href="#" class="w3-bar-item w3-button w3-padding-large w3-hide-small" onclick="nextMove(firstLevelArray, false)">Start</a>
   </div>
 </div>
 <div id="instructions-container">
@@ -211,30 +147,30 @@
 			//obstacle - you can't walk over it
 			//mySquare - my square that I should move
 			//finishLine - you win
-	function RenderGameplay(levelArray) {
+	function RenderGameplay(map) {
 		var gameContainer = document.getElementById("game-container");
 			ClearGameplay();
-		for (var i = 0; i < levelArray.length; i++) {
-			for (var j = 0; j < levelArray[i].length; j++) {
+		for (var i = 0; i < map.length; i++) {
+			for (var j = 0; j < map[i].length; j++) {
 			var innerDiv = document.createElement("div");
 				innerDiv.style.width = "50px";
 				innerDiv.style.height = "50px";
 				innerDiv.style.margin = "4px";
 				innerDiv.style.display="inline-block";
-				if (levelArray[i][j] == emptySlot) {
+				if (map[i][j] == emptySlot) {
 					innerDiv.style.backgroundColor ="#66ff33"; 
 				}
-				else if (levelArray[i][j] == obstacle){
+				else if (map[i][j] == obstacle){
 					innerDiv.style.backgroundColor = "black";
 				}
-				else if (levelArray[i][j] == mySquare){
+				else if (map[i][j] == mySquare){
 					innerDiv.style.backgroundColor ="red";
 				}
-				else if (levelArray[i][j] == finishLine) {
+				else if (map[i][j] == finishLine) {
 					innerDiv.style.backgroundColor="white";
 				}
 				gameContainer.appendChild(innerDiv);
-				if ((j+1) == levelArray[i].length) {
+				if ((j+1) == map[i].length) {
 					var brTag = document.createElement("BR");
 					gameContainer.appendChild(brTag);
 				}
@@ -242,9 +178,6 @@
 		}
 	}
 
-	function RenderGameplayTimeout(levelArray, milliseconds){
-		setTimeout(RenderGameplay, milliseconds, levelArray);
-	}
 
 	var firstLevelArray=[
 			[emptySlot, emptySlot, obstacle, emptySlot, emptySlot, emptySlot],
@@ -255,6 +188,61 @@
 	];
 	
 	RenderGameplay(firstLevelArray);
+
+	function nextMove(map, passedFinishLine) {
+		debugger;
+		var status = MoveSquare(directions[directionsCurrentIndex], map);
+		if (directionsCurrentIndex<directions.length) {
+			if (passedFinishLine) {
+				map[oldPosition.y][oldPosition.x]=finishLine;
+			}
+			else {
+				map[oldPosition.y][oldPosition.x]=emptySlot;
+			}
+
+			map[currentPlayerPosition.y][currentPlayerPosition.x]=mySquare;
+			switch (status) {
+				case proceed:
+					setTimeout(nextMove, 2000, map);
+				break;
+
+				case border:
+					alert("You lose :(");
+					isObstacleHitOrLeftBorders=true; 
+				break;
+
+				case obstacle:
+					alert("You lose :("); 
+					isObstacleHitOrLeftBorders=true; 
+				break;
+
+				case finishLine:
+					if (directions.length-1==directionsCurrentIndex) {
+						alert("You win");
+						isWin=true;
+					}
+					else {
+						var passedFinishLine=true;
+						setTimeout(nextMove, 2000, map, passedFinishLine);
+					}
+				break;
+			}
+
+			if (!isObstacleHitOrLeftBorders) {
+				GlowCurrentDirection(directionsCurrentIndex);
+				RenderGameplay(map);
+				directionsCurrentIndex++;
+			}
+			
+		}
+		else {
+			if (!isWin) {
+				debugger;
+				alert("You lose :(");
+			}
+		}
+
+	}
 </script>
 </body>
 </html>
