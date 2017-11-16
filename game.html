@@ -20,6 +20,10 @@
  		height: auto; 
  		background-color: pink;
 	}
+
+	#points-container {
+		float: right;
+	}
 </style>
 <body>
 
@@ -36,6 +40,7 @@
 	var oldPosition={};
 	var isWin=false;
 	var isObstacleHitOrLeftBorders=false;
+
 	function PrintInstructions(directions) {
 		var instructionsContainer = document.getElementById("instructions-container");
 		instructionsContainer.innerHTML = "";
@@ -137,8 +142,10 @@
   </div>
 </div>
 <div id="instructions-container">
-	
+
 </div>
+<span id="points-container">0</span>
+
 <div id="game-container">
 
 </div>
@@ -190,7 +197,6 @@
 	RenderGameplay(firstLevelArray);
 
 	function nextMove(map, passedFinishLine) {
-		debugger;
 		var status = MoveSquare(directions[directionsCurrentIndex], map);
 		if (directionsCurrentIndex<directions.length) {
 			if (passedFinishLine) {
@@ -231,18 +237,38 @@
 			if (!isObstacleHitOrLeftBorders) {
 				GlowCurrentDirection(directionsCurrentIndex);
 				RenderGameplay(map);
+				var updatePointsEvent = new CustomEvent('update-points',{detail:(directionsCurrentIndex+1)});
+				pointsContainer.dispatchEvent(updatePointsEvent);
 				directionsCurrentIndex++;
 			}
 			
 		}
 		else {
 			if (!isWin) {
-				debugger;
 				alert("You lose :(");
 			}
 		}
 
 	}
+
+	function UpdatePoints(points) {
+		pointsContainer.innerHTML=points.detail;
+	}
+
+	function UpdatePointsColor(points){
+		if (points.detail>3)
+		{
+			pointsContainer.style.color="blue";
+		}
+		else if(points.detail>1){
+			pointsContainer.style.color="magenta";
+		}
+	}
+
+	var pointsContainer=document.getElementById('points-container');
+	pointsContainer.addEventListener('update-points', UpdatePoints);
+	pointsContainer.addEventListener('update-points', UpdatePointsColor);
+
 </script>
 </body>
 </html>
