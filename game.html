@@ -23,12 +23,14 @@
 
 	#points-container {
 		float: right;
+		font-size: 50px;
 	}
 </style>
 <body>
 
 <script type="text/javascript">
 	var directionsCurrentIndex=0;
+	var points=0;
 	var directions=[];
 	var obstacle=1;
 	var border=2;
@@ -209,7 +211,7 @@
 			map[currentPlayerPosition.y][currentPlayerPosition.x]=mySquare;
 			switch (status) {
 				case proceed:
-					setTimeout(nextMove, 2000, map);
+					setTimeout(nextMove, 500, map);
 				break;
 
 				case border:
@@ -237,7 +239,8 @@
 			if (!isObstacleHitOrLeftBorders) {
 				GlowCurrentDirection(directionsCurrentIndex);
 				RenderGameplay(map);
-				var updatePointsEvent = new CustomEvent('update-points',{detail:(directionsCurrentIndex+1)});
+				points++;
+				var updatePointsEvent = new CustomEvent('update-points',{detail:(points)});
 				pointsContainer.dispatchEvent(updatePointsEvent);
 				directionsCurrentIndex++;
 			}
@@ -252,23 +255,50 @@
 	}
 
 	function UpdatePoints(points) {
-		pointsContainer.innerHTML=points.detail;
+		if(points.detail.doubled){
+			pointsContainer.innerHTML=points.detail.doubledPoints;
+			window.points=points.detail.doubledPoints;
+		}
+		else {
+			pointsContainer.innerHTML=points.detail;
+		}
+
+		if (points.detail>10) {
+			var doublePointsEvent=new CustomEvent('double-points',{detail:points.detail});
+			pointsContainer.dispatchEvent(doublePointsEvent);
+		}
+
 	}
 
+
 	function UpdatePointsColor(points){
-		if (points.detail>3)
+		if(points.detail>6)
+		{
+			pointsContainer.style.color="yellow";
+		}
+		else if (points.detail>3)
 		{
 			pointsContainer.style.color="blue";
 		}
 		else if(points.detail>1){
 			pointsContainer.style.color="magenta";
 		}
+		
+		if(points.detail>5){
+			pointsContainer.removeEventListener("update-points", UpdatePointsColor);
+		}
+	}
+
+	function DoublePoints(currentPoints) {
+		var doubledPoints=currentPoints.detail*2;
+		var pointsAndShouldDoubleObject={doubledPoints:doubledPoints, doubled:true};
+		pointsContainer.dispatchEvent(new CustomEvent('update-points',{detail:pointsAndShouldDoubleObject}));
 	}
 
 	var pointsContainer=document.getElementById('points-container');
 	pointsContainer.addEventListener('update-points', UpdatePoints);
 	pointsContainer.addEventListener('update-points', UpdatePointsColor);
-
+	pointsContainer.addEventListener('double-points', DoublePoints);
 </script>
 </body>
 </html>
