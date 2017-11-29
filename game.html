@@ -43,6 +43,26 @@
 	var isWin=false;
 	var isObstacleHitOrLeftBorders=false;
 
+	document.addEventListener('keydown', function(event) {
+		switch(event.key){
+			case "ArrowUp":
+				PressButton("up");
+			break;
+			case "ArrowDown":
+				PressButton("down");
+			break;
+			case "ArrowLeft":
+				PressButton("left");
+			break;
+			case "ArrowRight":
+				PressButton("right");
+			break;
+			case "Enter":
+				nextMove(firstLevelArray, false);
+			break;
+		}
+	})
+
 	function PrintInstructions(directions) {
 		var instructionsContainer = document.getElementById("instructions-container");
 		instructionsContainer.innerHTML = "";
